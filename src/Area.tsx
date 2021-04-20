@@ -1,5 +1,5 @@
 import React from 'react'
-import { CELL_WIDTH, Game } from './utils'
+import { CELL_WIDTH, Game, TILE_WIDTH } from './utils'
 
 import css from './area.module.sass'
 
@@ -12,7 +12,10 @@ export const Area: React.FC<Props> = ({ game }) => {
   const cells = Array.from({ length: game.columns * game.rows })
 
   const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    console.log(e.currentTarget.scrollTop, e.currentTarget.scrollLeft)
+    const { scrollTop, scrollLeft, clientWidth, clientHeight } = e.currentTarget
+
+    console.log('x', [Math.floor(scrollLeft / TILE_WIDTH), Math.floor((scrollLeft + clientWidth) / TILE_WIDTH)])
+    console.log('y', [Math.floor(scrollTop / TILE_WIDTH), Math.floor((scrollTop + clientHeight) / TILE_WIDTH)])
   }
 
   return (

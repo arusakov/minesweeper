@@ -2,6 +2,8 @@ export const MAX_CELLS = 10000
 
 export const CELL_WIDTH = 16
 
+export const TILE_WIDTH = CELL_WIDTH * 50
+
 export type Game = {
 	rows: number
 	columns: number
