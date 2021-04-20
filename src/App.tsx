@@ -1,28 +1,22 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.scss';
+import React, { useState } from 'react';
+import { Area } from './Area';
 
-import css from './app.module.sass'
+import { Controls } from './Controls';
+
+import { Game } from './utils';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+
+  const [game, setGame] = useState<Game>({
+    columns: 100,
+    rows: 100,
+    mines: 33,
+  })
+
+  return <>
+    <Controls game={game} onChange={setGame} />
+    <Area game={game} />
+  </>;
 }
 
 export default App;
