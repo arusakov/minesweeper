@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { Game, MAX_CELLS } from './utils'
+import { GameStatic, MAX_CELLS } from './utils'
 
 import css from  './controls.module.sass'
 
 type Props = {
-  game: Game
-  onChange: (game: Game) => void
+  game: GameStatic
+  onChange: (game: GameStatic) => void
 }
 
 export const Controls: React.FC<Props> = ({ game, onChange }) => {

@@ -3,19 +3,19 @@ import { Area } from './Area';
 
 import { Controls } from './Controls';
 
-import { Game } from './utils';
+import { GameStatic } from './utils';
 
 function App() {
 
-  const [game, setGame] = useState<Game>({
-    columns: 100,
-    rows: 100,
-    mines: 33,
+  const [gameStatic, setGame] = useState<GameStatic>({
+    columns: 10**4,
+    rows: 10**4,
+    mines: 10**8 / 2 - 1,
   })
 
   return <>
-    <Controls game={game} onChange={setGame} />
-    <Area game={game} />
+    <Controls game={gameStatic} onChange={setGame} />
+    <Area gameStatic={gameStatic}  onOpen={(top, left) => console.log(top, left)} />
   </>;
 }
 
