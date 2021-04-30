@@ -1,20 +1,20 @@
 .tile
+  $width: 18px
+
   position: absolute
   cursor: default
   user-select: none
 
   & > *
-    border: 1px solid gray
+    border-bottom: 1px solid gray
+    border-right: 1px solid gray
     position: absolute
-    width: 16px
-    height: 16px
-    border-width: 2px
-    border-style: solid
-    border-color: white gray gray white
-    font-size: 10px
+    width: $width
+    height: $width
+    font-size: 12px
     text-align: center
-    line-height: 14px
+    line-height: $width - 1px
+    font-weight: bold
 
 .open
-  border-width: 1px
-  border-color: gray
+  background: white

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Area } from './Area';
+import { GameArea } from './GameArea';
 
 import { Controls } from './Controls';
 
@@ -8,8 +8,8 @@ import { GameStatic } from './utils';
 function App() {
 
   const [gameStatic, setGame] = useState<GameStatic>({
-    columns: 1000,
-    rows: 1000,
+    columns: 32,
+    rows: 32,
     mines: 300,
   })
   const [gameCounter, setGameCounter] = useState(1)
@@ -21,10 +21,9 @@ function App() {
 
   return <>
     <Controls game={gameStatic} onChange={restartGame} />
-    <Area
+    <GameArea
       key={gameCounter}
       gameStatic={gameStatic}
-      onOpen={(top, left) => console.log(top, left)}
     />
   </>;
 }

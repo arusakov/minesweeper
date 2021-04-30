@@ -17,7 +17,7 @@ const getCellContent = (cell: number) => {
     if (cell & CELL_MINE) {
       return 'M'
     }
-    return cell & 0b00001111
+    return cell & 0b00001111 || null
   }
   if (cell & CELL_FLAG) {
     return 'F'

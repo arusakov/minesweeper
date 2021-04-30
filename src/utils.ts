@@ -1,6 +1,6 @@
 export const MAX_CELLS = 10000
 
-export const CELL_WIDTH = 16
+export const CELL_WIDTH = 18
 
 export const TILE_SIZE = 16
 
@@ -251,3 +251,25 @@ export const openEmptyCells = (setTiles: (t: Tiles) => void, tiles: Tiles, gameS
   setTiles(tiles)
 }
 
+export class Game {
+
+  tiles: Tiles
+  mines = 0
+  inited = 0
+  opened = 0
+
+  constructor(public readonly rows: number, public readonly columns: number) {
+    this.tiles = new Array(rows)
+    for (let i = 0; i < rows; ++i) {
+      this.tiles = new Array(columns)
+    }
+  }
+
+  getTile(top: number, left: number) {
+    return this.tiles[top][left]
+  }
+
+  initCell(realTop: number, realLeft: number) {
+
+  }
+}

@@ -8,15 +8,14 @@ import {
 } from './utils'
 import { Tile } from './Tile'
 
-import css from './Area.module.sass'
+import css from './GameArea.module.sass'
 
 type Props = {
   gameStatic: GameStatic
-  onOpen: (top: number, left: number) => void
 }
 
 
-export const Area: React.FC<Props> = ({ gameStatic, onOpen }) => {
+export const GameArea: React.FC<Props> = ({ gameStatic }) => {
   const rowTiles = Math.ceil(gameStatic.rows / TILE_SIZE)
   const columnTiles = Math.ceil(gameStatic.columns / TILE_SIZE)
 
@@ -99,8 +98,8 @@ export const Area: React.FC<Props> = ({ gameStatic, onOpen }) => {
       <div
         className={css.container}
         style={{
-          width: gameStatic.columns * CELL_WIDTH,
-          height: gameStatic.rows * CELL_WIDTH,
+          width: gameStatic.columns * CELL_WIDTH + 1,
+          height: gameStatic.rows * CELL_WIDTH + 1,
         }}>
         {currentTiles}
       </div>
