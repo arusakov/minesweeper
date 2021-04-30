@@ -35,21 +35,13 @@ export type Sides = {
   left: number
   right: number
   bottom: number
-  dx: number
-  dy: number
-  scrollTop: number
-  scrollLeft: number
 }
 
 
-export const calSides = (el: HTMLDivElement, prev: { top: number, left: number }): Sides => {
+export const calSides = (el: HTMLDivElement): Sides => {
   const { scrollTop, scrollLeft, clientWidth, clientHeight } = el
 
   return {
-    scrollTop,
-    scrollLeft,
-    dy: Math.sign(scrollTop - prev.top),
-    dx: Math.sign(scrollLeft - prev.left),
     top: Math.floor(scrollTop / TILE_WIDTH),
     left: Math.floor(scrollLeft / TILE_WIDTH),
     right: Math.floor((scrollLeft + clientWidth) / TILE_WIDTH),

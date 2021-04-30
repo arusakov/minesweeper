@@ -58,16 +58,12 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
   const [right, setRight] = useState(-1)
   const [bottom, setBottom] = useState(-1)
   const areaRef = useRef<HTMLDivElement>(null)
-  const areaScrolls = useRef({ top: 0, left: 0 })
 
   const updateTilesSides = useCallback(() => {
     if (!areaRef.current) {
       return
     }
-    const sides = calSides(areaRef.current, areaScrolls.current)
-
-    areaScrolls.current.top = sides.scrollTop
-    areaScrolls.current.left = sides.scrollLeft
+    const sides = calSides(areaRef.current)
 
     setTop(sides.top)
     setLeft(sides.left)
