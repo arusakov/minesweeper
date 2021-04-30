@@ -24,7 +24,6 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
     opened: 0,
   })
 
-
   const [tiles, setTiles] = useState(() => createMatrix<TileObj>(rowTiles, columnTiles))
 
   const onCellFlag = useCallback((tileTop: number, tileLeft: number, top: number, left: number) => {
@@ -48,10 +47,10 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
     const realTop = tileTop * TILE_SIZE + top
     const realLeft = tileLeft * TILE_SIZE + left
 
-    setTiles(openEmptyCells(tiles, gameStatic, gameData.current, [encodePosition(realTop, realLeft)]))
-
-
-  }, [gameStatic, tiles])
+    setTiles((tiles) => {
+      return openEmptyCells(tiles, gameStatic, gameData.current,  [encodePosition(realTop, realLeft)])
+    })
+  }, [gameStatic])
 
   const [top, setTop] = useState(0)
   const [left, setLeft] = useState(0)
