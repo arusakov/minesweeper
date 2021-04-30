@@ -8,14 +8,24 @@ import { GameStatic } from './utils';
 function App() {
 
   const [gameStatic, setGame] = useState<GameStatic>({
-    columns: 10**4,
-    rows: 10**4,
-    mines: 10**8 / 2 - 1,
+    columns: 1000,
+    rows: 1000,
+    mines: 300,
   })
+  const [gameCounter, setGameCounter] = useState(1)
+
+  const restartGame = (g: GameStatic) => {
+    setGame(g)
+    setGameCounter((c) => c + 1)
+  }
 
   return <>
-    <Controls game={gameStatic} onChange={setGame} />
-    <Area gameStatic={gameStatic}  onOpen={(top, left) => console.log(top, left)} />
+    <Controls game={gameStatic} onChange={restartGame} />
+    <Area
+      key={gameCounter}
+      gameStatic={gameStatic}
+      onOpen={(top, left) => console.log(top, left)}
+    />
   </>;
 }
 

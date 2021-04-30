@@ -1,5 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { addToOrderedArray, binarySearch, calSides, CELL_WIDTH, createPositionsArray, encodePosition, GameStatic, numberComparator, Sides, TileObj, TILE_SIZE } from './utils'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  calSides, CELL_FLAG, CELL_WIDTH,
+  createMatrix,
+  createTile,
+  encodePosition, GameData, GameStatic,
+  openEmptyCells, TileObj, TILE_SIZE, updateTile
+} from './utils'
 import { Tile } from './Tile'
 
 import css from './Area.module.sass'
@@ -11,78 +17,92 @@ type Props = {
 
 
 export const Area: React.FC<Props> = ({ gameStatic, onOpen }) => {
+  const rowTiles = Math.ceil(gameStatic.rows / TILE_SIZE)
+  const columnTiles = Math.ceil(gameStatic.columns / TILE_SIZE)
 
-  const probability = gameStatic.mines / (gameStatic.columns * gameStatic.rows)
+  const gameData = useRef<GameData>({
+    mines: 0,
+    inited: 0,
+    opened: 0,
+  })
 
-  const initialPositions = useMemo(() => createPositionsArray(gameStatic.mines, probability, gameStatic.rows, gameStatic.columns), [gameStatic])
-  const isMines = gameStatic.columns * gameStatic.rows > gameStatic.mines * 2
-  const [openedTiles, setOpenedTiles] = useState<TileObj[]>([]) 
-
-  console.log(openedTiles)
+  const [tiles, setTiles] = useState(createMatrix<TileObj>(rowTiles, columnTiles))
 
 
-  const callback = useCallback((top: number, left: number) => {
-    const position = encodePosition(top, left)
-    const finded = binarySearch(initialPositions, position, numberComparator) > -1
 
-    const tilePosition = encodePosition(Math.floor(top / TILE_SIZE), Math.floor(left / TILE_SIZE))
-    const tileIndex = binarySearch(openedTiles, tilePosition, (t, p) => t.position - p)
+  const onCellFlag = (tileTop: number, tileLeft: number, top: number, left: number) => {
+    const newTiles = tiles.slice()
+    newTiles[tileTop] = newTiles[tileTop].slice()
 
-    if ((isMines && finded) || (!isMines && !finded)) {
-
-    } else {
-      if (tileIndex < 0) {
-        const tile: TileObj = {
-          cells: [],
-          position: tilePosition,
-        }
-        // setOpenedTiles(addToOrderedArray())
-      }
-      // setOpenedTiles(addToOrderedArray(openedTiles, position))
+    let tile = newTiles[tileTop][tileLeft]
+    if (!tile) {
+      tile = createTile(TILE_SIZE, TILE_SIZE)
     }
 
-  }, [initialPositions, openedTiles, isMines])
+    const cell = tile[top][left]    
+    newTiles[tileTop][tileLeft] = updateTile(tile, cell ^ CELL_FLAG, top, left)
 
+    setTiles(newTiles)
+  }
+
+  const onCellClick = (tileTop: number, tileLeft: number, top: number, left: number) => {
+    const realTop = tileTop * TILE_SIZE + top
+    const realLeft = tileLeft * TILE_SIZE + left
+    openEmptyCells(setTiles, tiles, gameStatic, gameData.current, [encodePosition(realTop, realLeft)])
+  }
 
   const [top, setTop] = useState(0)
   const [left, setLeft] = useState(0)
   const [right, setRight] = useState(-1)
   const [bottom, setBottom] = useState(-1)
   const areaRef = useRef<HTMLDivElement>(null)
-
-
+  const areaScrolls = useRef({ top: 0, left: 0 })
 
   const updateTilesSides = useCallback(() => {
     if (!areaRef.current) {
       return
     }
-    const sides = calSides(areaRef.current)
+    const sides = calSides(areaRef.current, areaScrolls.current)
+
+    areaScrolls.current.top = sides.scrollTop
+    areaScrolls.current.left = sides.scrollLeft
+
     setTop(sides.top)
     setLeft(sides.left)
-    setRight(sides.right)
-    setBottom(sides.bottom)
-  }, [])
+    setRight(Math.min(sides.right, columnTiles - 1))
+    setBottom(Math.min(sides.bottom, rowTiles - 1))
+  }, [columnTiles, rowTiles])
 
   useEffect(updateTilesSides, [updateTilesSides])
 
-  const tiles = []
+  useEffect(() => {
+    window.addEventListener('resize', updateTilesSides)
+    return () => window.removeEventListener('resize', updateTilesSides)
+  }, [updateTilesSides])
+
+  const currentTiles = []
   for (let i = top; i <= bottom; ++i) {
     for (let j = left; j <= right; ++j) {
-      tiles.push(<Tile
-        initialPositions={initialPositions}
-        isMines={isMines}
+      currentTiles.push(<Tile
+        tile={tiles[i][j]}
         key={encodePosition(i, j)}
-        left={j}
-        top={i}
-        onOpen={callback}
+        tileLeft={j}
+        tileTop={i}
+        onClick={onCellClick}
+        onContextMenu={onCellFlag}
       />)
     }
   }
 
   return (
     <div className={css.area} ref={areaRef} onScroll={updateTilesSides}>
-      <div className={css.container} style={{ width: gameStatic.columns * CELL_WIDTH, height: gameStatic.rows * CELL_WIDTH }} >
-        {tiles}
+      <div
+        className={css.container}
+        style={{
+          width: gameStatic.columns * CELL_WIDTH,
+          height: gameStatic.rows * CELL_WIDTH,
+        }}>
+        {currentTiles}
       </div>
     </div>
   )
