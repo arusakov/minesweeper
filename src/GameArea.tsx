@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   calSides, CELL_FLAG, CELL_WIDTH,
   createMatrix,
@@ -14,7 +14,6 @@ type Props = {
   gameStatic: GameStatic
 }
 
-
 export const GameArea: React.FC<Props> = ({ gameStatic }) => {
   const rowTiles = Math.ceil(gameStatic.rows / TILE_SIZE)
   const columnTiles = Math.ceil(gameStatic.columns / TILE_SIZE)
@@ -25,30 +24,34 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
     opened: 0,
   })
 
-  const [tiles, setTiles] = useState(createMatrix<TileObj>(rowTiles, columnTiles))
 
+  const [tiles, setTiles] = useState(() => createMatrix<TileObj>(rowTiles, columnTiles))
 
+  const onCellFlag = useCallback((tileTop: number, tileLeft: number, top: number, left: number) => {
+    setTiles((tiles) => {
+      const newTiles = tiles.slice()
+      newTiles[tileTop] = newTiles[tileTop].slice()
 
-  const onCellFlag = (tileTop: number, tileLeft: number, top: number, left: number) => {
-    const newTiles = tiles.slice()
-    newTiles[tileTop] = newTiles[tileTop].slice()
+      let tile = newTiles[tileTop][tileLeft]
+      if (!tile) {
+        tile = createTile(TILE_SIZE, TILE_SIZE)
+      }
 
-    let tile = newTiles[tileTop][tileLeft]
-    if (!tile) {
-      tile = createTile(TILE_SIZE, TILE_SIZE)
-    }
+      const cell = tile[top][left]
+      newTiles[tileTop][tileLeft] = updateTile(tile, cell ^ CELL_FLAG, top, left)
 
-    const cell = tile[top][left]    
-    newTiles[tileTop][tileLeft] = updateTile(tile, cell ^ CELL_FLAG, top, left)
+      return newTiles
+    })
+  }, [])
 
-    setTiles(newTiles)
-  }
-
-  const onCellClick = (tileTop: number, tileLeft: number, top: number, left: number) => {
+  const onCellClick = useCallback((tileTop: number, tileLeft: number, top: number, left: number) => {
     const realTop = tileTop * TILE_SIZE + top
     const realLeft = tileLeft * TILE_SIZE + left
-    openEmptyCells(setTiles, tiles, gameStatic, gameData.current, [encodePosition(realTop, realLeft)])
-  }
+
+    setTiles(openEmptyCells(tiles, gameStatic, gameData.current, [encodePosition(realTop, realLeft)]))
+
+
+  }, [gameStatic, tiles])
 
   const [top, setTop] = useState(0)
   const [left, setLeft] = useState(0)
@@ -72,7 +75,7 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
     setBottom(Math.min(sides.bottom, rowTiles - 1))
   }, [columnTiles, rowTiles])
 
-  useEffect(updateTilesSides, [updateTilesSides])
+  useLayoutEffect(updateTilesSides, [updateTilesSides])
 
   useEffect(() => {
     window.addEventListener('resize', updateTilesSides)

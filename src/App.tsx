@@ -8,8 +8,8 @@ import { GameStatic } from './utils';
 function App() {
 
   const [gameStatic, setGame] = useState<GameStatic>({
-    columns: 32,
-    rows: 32,
+    columns: 64,
+    rows: 64,
     mines: 300,
   })
   const [gameCounter, setGameCounter] = useState(1)

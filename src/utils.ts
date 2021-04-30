@@ -21,27 +21,6 @@ export type GameData = {
 export type TileObj = Array<Uint8Array>
 export type Tiles = Array<Array<TileObj | undefined>>
 
-export const numberComparator = (a: number, b: number) => a - b
-
-export const binarySearch = <T, P>(list: T[], find: P, comparator: ((t1: T, t2: P) => number), start = 0, end = list.length) => {
-  while (start < end) {
-    const index = start + Math.floor((end - start) / 2)
-    const element = list[index]
-
-    const result = comparator(element, find)
-
-    if (!result) {
-      return index
-    }
-    if (result < 0) {
-      start = index + 1
-    } else {
-      end = index
-    }
-  }
-  return -1
-}
-
 export const encodePosition = (top: number, left: number) =>
   (top << 16) | left
 
@@ -50,36 +29,6 @@ export const decodePosition = (pos: number) => ({
   left: 0xFFFF & pos,
 })
 
-export const createPositionsArray = (count: number, probability: number, maxTop: number, maxLeft: number) => {
-  const array: number[] = []
-  for (let i = 0; i < count; ++i) {
-    if (Math.random() < probability) {
-      array.push(Math.floor(i / maxTop), Math.floor(i % maxLeft))
-    }
-  }
-
-  return array
-}
-
-export const addToOrderedArray = (array: number[], val: number) => {
-  const newArr = [...array]
-
-  newArr.push(val)
-
-  newArr.sort((a, b) => a - b)
-
-  return newArr
-
-  // let i = array.length
-  // while (i--) {
-  //   if (val < array[i]) {
-  //     break
-  //   }
-  // }
-  // const newArr = [...array]
-  // newArr.splice(i, 0, val)
-  // return newArr
-}
 
 export type Sides = {
   top: number
@@ -198,8 +147,9 @@ export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: num
   return newTiles
 }
 
-export const openEmptyCells = (setTiles: (t: Tiles) => void, tiles: Tiles, gameStatic: GameStatic, gameData: GameData, queue: number[]) => {
-  for (let counter = 0; counter < 256; ++counter) {
+
+export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: GameData, queue: number[]) => {
+  for (let counter = 0; counter < 32; ++counter) {
     const position = queue.shift()
     if (position == null) {
       break
@@ -236,7 +186,7 @@ export const openEmptyCells = (setTiles: (t: Tiles) => void, tiles: Tiles, gameS
           continue
         }
         const pos = encodePosition(i, j)
-        if (queue.indexOf(pos)) {
+        if (queue.indexOf(pos) >= 0) {
           continue
         }
         queue.push(pos)
@@ -244,32 +194,5 @@ export const openEmptyCells = (setTiles: (t: Tiles) => void, tiles: Tiles, gameS
     }
   }
 
-  if (queue.length) {
-    setTimeout(() => openEmptyCells(setTiles, tiles, gameStatic, gameData, queue), 300)
-  }
-
-  setTiles(tiles)
-}
-
-export class Game {
-
-  tiles: Tiles
-  mines = 0
-  inited = 0
-  opened = 0
-
-  constructor(public readonly rows: number, public readonly columns: number) {
-    this.tiles = new Array(rows)
-    for (let i = 0; i < rows; ++i) {
-      this.tiles = new Array(columns)
-    }
-  }
-
-  getTile(top: number, left: number) {
-    return this.tiles[top][left]
-  }
-
-  initCell(realTop: number, realLeft: number) {
-
-  }
+  return tiles
 }
