@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
-  calSides, CELL_FLAG, CELL_WIDTH,
+  calSides, CELL_FLAG, CELL_MINE, CELL_WIDTH,
   createMatrix,
   createTile,
   encodePosition, GameData, GameStatic,
-  openEmptyCells, TileObj, TILE_SIZE, updateTile
+  openEmptyCells, TileObj, TILE_SIZE, updateTile, useInterval
 } from './utils'
 import { Tile } from './Tile'
 
@@ -12,9 +12,11 @@ import css from './GameArea.module.sass'
 
 type Props = {
   gameStatic: GameStatic
+  failed: boolean
+  onFail: () => void
 }
 
-export const GameArea: React.FC<Props> = ({ gameStatic }) => {
+export const GameArea: React.FC<Props> = ({ failed, gameStatic, onFail }) => {
   const rowTiles = Math.ceil(gameStatic.rows / TILE_SIZE)
   const columnTiles = Math.ceil(gameStatic.columns / TILE_SIZE)
 
@@ -24,9 +26,19 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
     opened: 0,
   })
 
+
+  // useInterval(() => {
+  //   setTiles((tiles) => {
+  //     return openEmptyCells(tiles, gameStatic, gameData.current,  queue.current)
+  //   })
+  // }, queue.current.length ? 500 : 0)
+
   const [tiles, setTiles] = useState(() => createMatrix<TileObj>(rowTiles, columnTiles))
 
   const onCellFlag = useCallback((tileTop: number, tileLeft: number, top: number, left: number) => {
+    if (failed) {
+      return
+    }
     setTiles((tiles) => {
       const newTiles = tiles.slice()
       newTiles[tileTop] = newTiles[tileTop].slice()
@@ -41,16 +53,23 @@ export const GameArea: React.FC<Props> = ({ gameStatic }) => {
 
       return newTiles
     })
-  }, [])
+  }, [failed])
 
   const onCellClick = useCallback((tileTop: number, tileLeft: number, top: number, left: number) => {
+    if (failed) {
+      return
+    }
     const realTop = tileTop * TILE_SIZE + top
     const realLeft = tileLeft * TILE_SIZE + left
 
-    setTiles((tiles) => {
-      return openEmptyCells(tiles, gameStatic, gameData.current,  [encodePosition(realTop, realLeft)])
-    })
-  }, [gameStatic])
+    const newTiles =  openEmptyCells(tiles, gameStatic, gameData.current, [encodePosition(realTop, realLeft)])
+    if (newTiles[tileTop][tileLeft]![top][left] & CELL_MINE) {
+      // todo open mines
+      onFail()
+    }
+
+    setTiles(newTiles)
+  }, [failed, gameStatic, onFail, tiles])
 
   const [top, setTop] = useState(0)
   const [left, setLeft] = useState(0)

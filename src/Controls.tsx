@@ -5,10 +5,11 @@ import css from  './controls.module.sass'
 
 type Props = {
   game: GameStatic
+  failed: boolean
   onChange: (game: GameStatic) => void
 }
 
-export const Controls: React.FC<Props> = ({ game, onChange }) => {
+export const Controls: React.FC<Props> = ({ failed, game, onChange }) => {
   const [rows, setRows] = useState(game.rows)
   const [columns, setColumns] = useState(game.columns)
   const [mines, setMines] = useState(game.mines)
@@ -50,7 +51,7 @@ export const Controls: React.FC<Props> = ({ game, onChange }) => {
             onChange={(e) => setMines(Number(e.currentTarget.value))}
           />
         </label>
-        <button>Start!</button>
+        <button>{failed ? 'FAIL.' : ''} Restart!</button>
       </form>
     </div>
   )

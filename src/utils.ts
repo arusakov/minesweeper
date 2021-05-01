@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react"
+
 export const MAX_CELLS = 10000
 
 export const CELL_WIDTH = 18
@@ -187,4 +189,21 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
   }
 
   return tiles
+
+}
+
+
+export const useInterval = (callback: () => unknown, delay: number) => {
+  const savedCallback = useRef<() => unknown>();
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  });
+
+  useEffect(() => {
+    if (delay) {
+      const id = setInterval(() => savedCallback.current!(), delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
 }
