@@ -8,30 +8,30 @@ import { GameStatic } from './utils';
 function App() {
 
   const [gameStatic, setGame] = useState<GameStatic>({
-    columns: 10,
-    rows: 10,
-    mines: 2,
+    columns: 32,
+    rows: 32,
+    mines: 40,
   })
   const [gameCounter, setGameCounter] = useState(1)
-  const [failed, setFailed] = useState(false)
+  const [result, setResult] = useState<boolean | null>(null)
 
   const restartGame = (g: GameStatic) => {
     setGame(g)
-    setFailed(false)
+    setResult(null)
     setGameCounter((c) => c + 1)
   }
 
   return <>
     <Controls
-      failed={failed}
+      result={result}
       game={gameStatic}
       onChange={restartGame}
     />
     <GameArea
       key={gameCounter}
-      failed={failed}
+      finished={result != null}
       gameStatic={gameStatic}
-      onFail={() => setFailed(true)}
+      onFinish={setResult}
     />
   </>;
 }

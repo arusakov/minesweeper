@@ -1,5 +1,3 @@
-import { useEffect, useRef } from "react"
-
 export const MAX_CELLS = 10000
 
 export const CELL_WIDTH = 18
@@ -18,6 +16,10 @@ export type GameData = {
   inited: number
   mines: number
   opened: number
+  rowTiles: number
+  columnTiles: number
+  failedTileRow: number
+  failedTileColumn: number
 }
 
 export type TileObj = Array<Uint8Array>
@@ -141,9 +143,76 @@ export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: num
   return newTiles
 }
 
+export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, gameStatic: GameStatic, gameData: GameData, queue: number[]) => {
+  tiles = tiles.slice()
+
+  for (let step = 0; step < 16; ++step) {
+    const tilePostion = queue.shift()
+    if (tilePostion == null) {
+      break
+    }
+
+    const { top, left } = decodePosition(tilePostion)
+    console.log('tile', top, left)
+    console.log('queue', queue.length)
+
+    tiles[top] = tiles[top].slice()
+
+    let tile = tiles[top][left]
+    if (!tile) {
+      tile = createTile(TILE_SIZE, TILE_SIZE)
+    }
+
+    for (let i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
+      const r = Math.floor(i / TILE_SIZE)
+      const c = i % TILE_SIZE
+
+      if (top * TILE_SIZE + r >= gameStatic.rows || left * TILE_SIZE + c >= gameStatic.columns) {
+        continue
+      }
+
+      const cell = tile[r][c]
+
+      if (!(cell & CELL_INIT)) {
+        const probability = (gameStatic.mines - gameData.mines) / (gameStatic.columns * gameStatic.rows - gameData.inited)
+        gameData.inited += 1
+
+        if (Math.random() < probability) {
+          gameData.mines += 1
+
+          tile = updateTile(tile, cell | CELL_INIT | CELL_MINE | CELL_OPENED, r, c)
+        }
+      } else if (cell & CELL_MINE) {
+        tile = updateTile(tile, cell | CELL_OPENED, r, c)
+      }
+    }
+
+    tiles[top][left] = tile
+
+    const distance = Math.abs(top - gameData.failedTileRow) + Math.abs(left - gameData.failedTileColumn)
+
+
+    for (let i = Math.max(0, top - 1); i <= Math.min(gameData.rowTiles - 1, top + 1); ++i) {
+      for (let j = Math.max(0, left - 1); j <= Math.min(gameData.columnTiles - 1, left + 1); ++j) {
+        if (Math.abs(i - gameData.failedTileRow) + Math.abs(j - gameData.failedTileColumn) <= distance) {
+          continue
+        }
+
+        const pos = encodePosition(i, j)
+        if (queue.includes(pos)) {
+          continue
+        }
+        queue.push(pos)
+      }
+    }
+
+  }
+  return tiles
+}
+
 
 export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: GameData, queue: number[]) => {
-  for (let counter = 0; counter < 32; ++counter) {
+  for (let counter = 0; counter < 512; ++counter) {
     const position = queue.shift()
     if (position == null) {
       break
@@ -161,13 +230,11 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
     const tile = tiles[ti][tj] as Uint8Array[]
     const cell = tile[tii][tjj]
 
-    console.log(queue.length, cell, top, left)
 
     tiles[ti][tj] = updateTile(tile, cell | CELL_OPENED, tii, tjj)
     gameData.opened += 1
 
     if (cell & 0b00001111) {
-      console.log('Continue', cell, top, left)
       continue
     }
 
@@ -180,7 +247,7 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
           continue
         }
         const pos = encodePosition(i, j)
-        if (queue.indexOf(pos) >= 0) {
+        if (queue.includes(pos)) {
           continue
         }
         queue.push(pos)
@@ -189,21 +256,4 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
   }
 
   return tiles
-
-}
-
-
-export const useInterval = (callback: () => unknown, delay: number) => {
-  const savedCallback = useRef<() => unknown>();
-
-  useEffect(() => {
-    savedCallback.current = callback;
-  });
-
-  useEffect(() => {
-    if (delay) {
-      const id = setInterval(() => savedCallback.current!(), delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
 }
