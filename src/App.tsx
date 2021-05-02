@@ -10,7 +10,7 @@ function App() {
   const [gameStatic, setGame] = useState<GameStatic>({
     columns: 32,
     rows: 32,
-    mines: 40,
+    mines: 240,
   })
   const [gameCounter, setGameCounter] = useState(1)
   const [result, setResult] = useState<boolean | null>(null)
