@@ -1,3 +1,5 @@
+import Denque from "denque"
+
 export const MAX_CELLS = 10000
 
 export const CELL_WIDTH = 18
@@ -17,6 +19,8 @@ export type GameData = {
   mines: number
   opened: number
   rowTiles: number
+  queue: Denque<number>
+  set: Set<number>
   columnTiles: number
   failedTileRow: number
   failedTileColumn: number
@@ -143,14 +147,18 @@ export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: num
   return newTiles
 }
 
-export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, gameStatic: GameStatic, gameData: GameData, queue: number[]) => {
+export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, gameStatic: GameStatic, gameData: GameData) => {
   tiles = tiles.slice()
 
-  for (let step = 0; step < 16; ++step) {
+  const { queue, set } = gameData
+
+  for (let step = 0; step < 32; ++step) {
     const tilePostion = queue.shift()
     if (tilePostion == null) {
       break
     }
+
+    set.delete(tilePostion)
 
     const { top, left } = decodePosition(tilePostion)
     console.log('tile', top, left)
@@ -199,10 +207,11 @@ export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, game
         }
 
         const pos = encodePosition(i, j)
-        if (queue.includes(pos)) {
+        if (set.has(pos)) {
           continue
         }
         queue.push(pos)
+        set.add(pos)
       }
     }
 
@@ -211,12 +220,15 @@ export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, game
 }
 
 
-export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: GameData, queue: number[]) => {
+export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: GameData) => {
+  const { queue, set } = gameData
+
   for (let counter = 0; counter < 512; ++counter) {
     const position = queue.shift()
     if (position == null) {
       break
     }
+    set.delete(position)
 
     const { top, left } = decodePosition(position)
 
@@ -247,10 +259,11 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
           continue
         }
         const pos = encodePosition(i, j)
-        if (queue.includes(pos)) {
+        if (set.has(pos)) {
           continue
         }
         queue.push(pos)
+        set.add(pos)
       }
     }
   }

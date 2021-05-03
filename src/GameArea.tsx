@@ -10,6 +10,7 @@ import {
 import { Tile } from './Tile'
 
 import css from './GameArea.module.sass'
+import Denque from 'denque'
 
 type Props = {
   gameStatic: GameStatic
@@ -34,7 +35,8 @@ export class GameArea extends React.Component<Props, State> implements GameData 
 
   failedTileColumn = 0
   failedTileRow = 0
-  queue: number[] = []
+  queue = new Denque<number>()
+  set = new Set<number>()
   tilesSet = new Set<number>()
   intervalId = 0
   
@@ -99,7 +101,7 @@ export class GameArea extends React.Component<Props, State> implements GameData 
       clearInterval(this.intervalId)
       this.failedTileColumn = tileLeft
       this.failedTileRow = tileTop
-      this.queue = [encodePosition(tileTop, tileLeft)]
+      this.queue = new Denque([encodePosition(tileTop, tileLeft)])
       this.intervalId = window.setInterval(this.openMinesCells, 200)
 
       this.props.onFinish(false)
@@ -110,7 +112,7 @@ export class GameArea extends React.Component<Props, State> implements GameData 
     const { tiles } = this.state
     const { gameStatic } = this.props
 
-    const newTiles = initCellsForMines(tiles, gameStatic, this, this.queue)
+    const newTiles = initCellsForMines(tiles, gameStatic, this)
     this.setState({ tiles: newTiles })
 
     if (this.queue.length) {
@@ -126,7 +128,7 @@ export class GameArea extends React.Component<Props, State> implements GameData 
     const { tiles } = this.state
     const { gameStatic } = this.props
 
-    const newTiles = openEmptyCells(tiles, gameStatic, this, this.queue)
+    const newTiles = openEmptyCells(tiles, gameStatic, this)
 
     if (this.queue.length) {
       if (!this.intervalId) {
