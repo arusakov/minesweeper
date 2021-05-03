@@ -151,20 +151,15 @@ export class GameArea extends React.Component<Props, State> implements GameData 
       return
     }
     const newTiles = this.state.tiles.slice()
-    newTiles[tileTop] = newTiles[tileTop].slice()
+    const tile = newTiles[tileTop][tileLeft]
+    const cell =  tile ? tile[top][left] : 0
 
-    let tile = newTiles[tileTop][tileLeft]
-    if (!tile) {
-      tile = createTile(TILE_SIZE, TILE_SIZE)
-    }
-
-    const cell = tile[top][left]
     if (!(cell & CELL_FLAG) && this.flags >= this.props.gameStatic.mines) {
       return
     }
 
     this.flags += cell & CELL_FLAG ? -1 : 1
-    newTiles[tileTop][tileLeft] = updateTile(tile, cell ^ CELL_FLAG, top, left)
+    updateTile(newTiles, this.state.tiles, tileTop, tileLeft, cell ^ CELL_FLAG, top, left)
 
     this.setState({ tiles: newTiles })  
   }

@@ -73,18 +73,21 @@ export const createTile = (rows: number, columns: number) => {
   return tile
 }
 
-export const updateTile = (origin: TileObj, item: number, top: number, left: number) => {
-  const newTile = origin.slice()
-  newTile[top] = newTile[top].slice()
-  newTile[top][left] = item
-  return newTile
-}
-
-export const updateMatrix = <T>(origin: T[][], item: T, top: number, left: number) => {
-  const newMatrix = origin.slice()
-  newMatrix[top] = newMatrix[top].slice()
-  newMatrix[top][left] = item
-  return newMatrix
+export const updateTile = (newTiles: Tiles, oldTiles: Tiles, ti: number, tj: number, item: number, top: number, left: number) => {
+  const oldTile = oldTiles[ti][tj]
+  let tile = newTiles[ti][tj]
+  if (!tile || tile === oldTile) {
+    if (tile) {
+      tile = tile.slice()
+      tile[top] = tile[top].slice()
+    } else {
+      tile = createTile(TILE_SIZE, TILE_SIZE)
+    }
+    newTiles[ti] = newTiles[ti].slice()
+    newTiles[ti][tj] = tile
+  }
+  tile[top][left] = item
+  return tile
 }
 
 export const CELL_OPENED = 0b10000000
@@ -92,25 +95,19 @@ export const CELL_INIT = 0b01000000
 export const CELL_MINE = 0b00100000
 export const CELL_FLAG = 0b00010000
 
-export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: number, realLeft: number, gameStatic: GameStatic, gameData: GameData) => {
-  const newTiles: Array<Array<TileObj | undefined>> = tiles.slice()
+export const initCells = (newTiles: Tiles, oldTiles: Tiles, realTop: number, realLeft: number, gameStatic: GameStatic, gameData: GameData) => {
 
   for (let i = Math.max(0, realTop - 1); i <= Math.min(gameStatic.rows - 1, realTop + 1); ++i) {
     const ti = Math.floor(i / TILE_SIZE)
     const iInTile = i % TILE_SIZE
 
-    newTiles[ti] = newTiles[ti].slice()
-
     for (let j = Math.max(0, realLeft - 1); j <= Math.min(gameStatic.columns - 1, realLeft + 1); ++j) {
       const tj = Math.floor(j / TILE_SIZE)
       const jInTile = j % TILE_SIZE
 
-      let tile = newTiles[ti][tj]
-      if (!tile) {
-        tile = createTile(TILE_SIZE, TILE_SIZE)
-      }
+      const tile = newTiles[ti][tj]
 
-      const cell = tile[iInTile][jInTile]
+      const cell = tile ? tile[iInTile][jInTile] : 0
 
       if (!(cell & CELL_INIT)) {
         const probability = (realTop === i && realLeft === j ? gameData.opened : true) && (
@@ -118,7 +115,7 @@ export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: num
         )
 
         const isMine = Boolean(probability) && Math.random() < probability
-        newTiles[ti][tj] = updateTile(tile, cell | CELL_INIT | (isMine ? CELL_MINE : 0), iInTile, jInTile)
+        updateTile(newTiles, oldTiles, ti, tj, cell | CELL_INIT | (isMine ? CELL_MINE : 0), iInTile, jInTile)
 
         if (isMine) {
           gameData.mines += 1
@@ -129,13 +126,10 @@ export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: num
             for (let jj = Math.max(0, j - 1); jj <= Math.min(gameStatic.columns - 1, j + 1); ++jj) {
               const tjj = Math.floor(jj / TILE_SIZE)
               const jjInTile = jj % TILE_SIZE
-              let tileIfMine = newTiles[tii][tjj]
-              if (!tileIfMine) {
-                tileIfMine = createTile(TILE_SIZE, TILE_SIZE)
-              }
+              const tileIfMine = newTiles[tii][tjj]
 
-              const cellValue = tileIfMine[iiInTile][jjInTile]
-              newTiles[tii][tjj] = updateTile(tileIfMine, cellValue + 1, iiInTile, jjInTile)
+              const cellValue = tileIfMine? tileIfMine[iiInTile][jjInTile] : 0
+              updateTile(newTiles, oldTiles, tii, tjj, cellValue + 1, iiInTile, jjInTile)
             }
           }
         }
@@ -144,11 +138,10 @@ export const initCells = (tiles: Array<Array<TileObj | undefined>>, realTop: num
       }
     }
   }
-  return newTiles
 }
 
 export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, gameStatic: GameStatic, gameData: GameData) => {
-  tiles = tiles.slice()
+  const newTiles = tiles.slice()
 
   const { queue, set } = gameData
 
@@ -161,15 +154,8 @@ export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, game
     set.delete(tilePostion)
 
     const { top, left } = decodePosition(tilePostion)
-    console.log('tile', top, left)
-    console.log('queue', queue.length)
 
-    tiles[top] = tiles[top].slice()
-
-    let tile = tiles[top][left]
-    if (!tile) {
-      tile = createTile(TILE_SIZE, TILE_SIZE)
-    }
+    const tile = newTiles[top][left] || createTile(TILE_SIZE, TILE_SIZE)
 
     for (let i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
       const r = Math.floor(i / TILE_SIZE)
@@ -185,17 +171,15 @@ export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, game
         const probability = (gameStatic.mines - gameData.mines) / (gameStatic.columns * gameStatic.rows - gameData.inited)
         gameData.inited += 1
 
-        if (Math.random() < probability) {
-          gameData.mines += 1
+        const isMine = Math.random() < probability
+        gameData.mines += isMine ? 1 : 0
 
-          tile = updateTile(tile, cell | CELL_INIT | CELL_MINE | CELL_OPENED, r, c)
-        }
+        updateTile(newTiles, newTiles, top, left, cell | CELL_INIT | (isMine ? CELL_MINE | CELL_OPENED : 0), r, c)
       } else if (cell & CELL_MINE) {
-        tile = updateTile(tile, cell | CELL_OPENED, r, c)
+        updateTile(newTiles, newTiles, top, left, cell | CELL_OPENED, r, c)
       }
     }
 
-    tiles[top][left] = tile
 
     const distance = Math.abs(top - gameData.failedTileRow) + Math.abs(left - gameData.failedTileColumn)
 
@@ -216,12 +200,14 @@ export const initCellsForMines = (tiles: Array<Array<TileObj | undefined>>, game
     }
 
   }
-  return tiles
+  return newTiles
 }
 
 
 export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: GameData) => {
   const { queue, set } = gameData
+
+  let newTiles = tiles.slice()
 
   for (let counter = 0; counter < 512; ++counter) {
     const position = queue.shift()
@@ -232,18 +218,18 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
 
     const { top, left } = decodePosition(position)
 
-    tiles = initCells(tiles, top, left, gameStatic, gameData)
+    initCells(newTiles, tiles, top, left, gameStatic, gameData)
 
     const ti = Math.floor(top / TILE_SIZE)
     const tj = Math.floor(left / TILE_SIZE)
     const tii = top % TILE_SIZE
     const tjj = left % TILE_SIZE
 
-    const tile = tiles[ti][tj] as Uint8Array[]
+    const tile = newTiles[ti][tj] as Uint8Array[]
     const cell = tile[tii][tjj]
 
 
-    tiles[ti][tj] = updateTile(tile, cell | CELL_OPENED, tii, tjj)
+    updateTile(newTiles, tiles, ti, tj, cell | CELL_OPENED, tii, tjj)
     gameData.opened += 1
 
     if (cell & 0b00001111) {
@@ -255,7 +241,7 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
         if (i === top && j === left) {
           continue
         }
-        if (tiles[Math.floor(i / TILE_SIZE)][Math.floor(j / TILE_SIZE)]![i % TILE_SIZE][j % TILE_SIZE] & CELL_OPENED) {
+        if (newTiles[Math.floor(i / TILE_SIZE)][Math.floor(j / TILE_SIZE)]![i % TILE_SIZE][j % TILE_SIZE] & CELL_OPENED) {
           continue
         }
         const pos = encodePosition(i, j)
@@ -268,5 +254,5 @@ export const openEmptyCells = (tiles: Tiles, gameStatic: GameStatic, gameData: G
     }
   }
 
-  return tiles
+  return newTiles
 }
